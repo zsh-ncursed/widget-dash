@@ -1,23 +1,23 @@
 # Widget Dashboard
 
-Простая стартовая страница для Firefox с виджетами для управления закладками, заметками, задачами и календарем.
+A simple Firefox start page with widgets to manage bookmarks, notes, tasks, calendar and more.
 
-## Возможности
+## Features
 
-- Темная/светлая тема
-- Закладки с иконками
-- Заметки
-- Календарь с событиями
-- Список задач
-- Часы
-- Калькулятор
+- Dark/Light theme
+- Bookmarks with favicons
+- Notes
+- Calendar with events
+- Todo list
+- Clock
+- Calculator
 
-## Установка
+## Installation
 
-1. Скачайте репозиторий
-2. Откройте `index.html` в браузере
-3. Добавьте страницу в закладки
+1. Download repository
+2. Open `index.html` in browser
+3. Add page to bookmarks
 
-## Лицензия
+## License
 
 MIT 
