@@ -1,0 +1,12 @@
+# Technical specification
+техническое_зажание.ini
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db 
