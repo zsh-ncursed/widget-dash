@@ -249,8 +249,22 @@ function autoGrow(textarea) {
   textarea.style.height = (textarea.scrollHeight) + 'px';
 }
 
-let zoneWidgets = [[], [], []];
-let zoneWidgetsCalendarState = {};
+let zoneWidgets = null;
+
+function loadZoneWidgets() {
+  const data = getData();
+  const page = getCurrentPage(data);
+  if (!page.zoneWidgets) page.zoneWidgets = [[], [], []];
+  zoneWidgets = page.zoneWidgets;
+}
+
+function saveZoneWidgets() {
+  const data = getData();
+  const page = getCurrentPage(data);
+  page.zoneWidgets = zoneWidgets;
+  setData(data);
+}
+
 function renderZones() {
   for (let i = 0; i < 3; i++) {
     const zone = document.getElementById(`zone-${i+1}`);
@@ -300,6 +314,7 @@ function showWidgetMenu(idx) {
   zone.appendChild(menu);
   menu.querySelectorAll('.widget-menu-btn').forEach(btn => btn.onclick = function() {
     zoneWidgets[idx].push(this.dataset.type);
+    saveZoneWidgets();
     renderZones();
   });
 }
@@ -446,6 +461,7 @@ function removeWidgetBySectionId(sectionId) {
       const wid = `${zoneWidgets[i][j]}-widget-${i}-${j}`;
       if (wid === sectionId) {
         zoneWidgets[i].splice(j, 1);
+        saveZoneWidgets();
         renderZones();
         return;
       }
@@ -652,10 +668,12 @@ function updateWidgetPositions() {
     Array.from(zone.querySelectorAll('.widget-section'))
       .map(widget => widget.id.split('-')[0])
   );
+  saveZoneWidgets();
   renderZones();
 }
 
 function renderAll() {
+  loadZoneWidgets();
   renderTabsBar();
   renderZones();
   initDragAndDrop();
