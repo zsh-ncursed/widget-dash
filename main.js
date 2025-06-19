@@ -590,7 +590,73 @@ function renderCalculator(id = 'calculator-widget') {
   };
 }
 
+// Drag and Drop functionality
+function initDragAndDrop() {
+  const widgets = document.querySelectorAll('.widget-section');
+  const zones = document.querySelectorAll('.zone');
+
+  widgets.forEach(widget => {
+    widget.setAttribute('draggable', true);
+    
+    widget.addEventListener('dragstart', e => {
+      widget.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', widget.id);
+    });
+
+    widget.addEventListener('dragend', () => {
+      widget.classList.remove('dragging');
+    });
+  });
+
+  zones.forEach(zone => {
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+      const dragging = document.querySelector('.dragging');
+      if (dragging) {
+        const afterElement = getDragAfterElement(zone, e.clientY);
+        if (afterElement) {
+          zone.insertBefore(dragging, afterElement);
+        } else {
+          zone.appendChild(dragging);
+        }
+      }
+    });
+
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      const widgetId = e.dataTransfer.getData('text/plain');
+      const widget = document.getElementById(widgetId);
+      if (widget) {
+        updateWidgetPositions();
+      }
+    });
+  });
+}
+
+function getDragAfterElement(zone, y) {
+  const draggableElements = [...zone.querySelectorAll('.widget-section:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function updateWidgetPositions() {
+  const zones = document.querySelectorAll('.zone');
+  zoneWidgets = Array.from(zones).map(zone => 
+    Array.from(zone.querySelectorAll('.widget-section'))
+      .map(widget => widget.id.split('-')[0])
+  );
+  renderZones();
+}
+
 function renderAll() {
   renderTabsBar();
   renderZones();
+  initDragAndDrop();
 } 

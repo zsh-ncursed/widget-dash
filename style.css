@@ -97,4 +97,84 @@ body {
 
 .widget-menu-btn:hover {
     background: var(--border);
+}
+
+/* Calendar styles */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin: 10px 0;
+}
+
+.calendar-cell {
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.calendar-cell:hover {
+    background: var(--border);
+}
+
+.calendar-today {
+    background: var(--accent);
+    color: white;
+}
+
+/* Notes styles */
+.notes-area {
+    width: 100%;
+    min-height: 100px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px;
+    resize: vertical;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Todo styles */
+.todo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.todo-item:last-child {
+    border-bottom: none;
+}
+
+.todo-checkbox {
+    margin-right: 8px;
+}
+
+.todo-text {
+    flex: 1;
+}
+
+.todo-done {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Drag and Drop */
+.widget-section.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+.widget-section.drag-over {
+    border: 2px dashed var(--accent);
 } 
