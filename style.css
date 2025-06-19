@@ -1,0 +1,100 @@
+:root {
+    --bg: #fff;
+    --text: #333;
+    --border: #e0e0e0;
+    --shadow: rgba(0,0,0,0.08);
+    --accent: #4f8cff;
+}
+
+body.dark {
+    --bg: #1a1a1a;
+    --text: #fff;
+    --border: #333;
+    --shadow: rgba(0,0,0,0.2);
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.zones-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.zone {
+    min-height: 200px;
+}
+
+.widget-section {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.widget-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.widget-header-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.widget-header-btn:hover {
+    opacity: 1;
+}
+
+.add-widget-btn {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.add-widget-btn:hover {
+    opacity: 1;
+}
+
+.widget-menu-btn {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.widget-menu-btn:hover {
+    background: var(--border);
+} 

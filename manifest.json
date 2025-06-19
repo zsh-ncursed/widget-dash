@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Start Page Widgets",
+  "version": "0.1",
+  "description": "Customizable start page with bookmarks and notes widgets.",
+  "icons": {
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "storage"
+  ]
+} 
