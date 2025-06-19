@@ -1,4 +1,4 @@
-// Theme toggle
+// Theme toggle and initialization
 const themeBtn = document.getElementById('theme-toggle');
 const setTheme = (dark) => {
   document.body.classList.toggle('dark', dark);
@@ -10,7 +10,7 @@ window.onload = () => {
   renderAll();
 };
 
-// Data storage
+// Data storage and management
 const STORAGE_KEY = 'startpage_data_v2';
 function getData() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"pages":[{"id":1,"name":"Main","bookmarks":[],"notes":[]}],"current":1}');
