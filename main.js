@@ -1,11 +1,18 @@
 // Theme toggle and initialization
 const themeBtn = document.getElementById('theme-toggle');
+const themeIcon = themeBtn.querySelector('i.fa-moon, i.fa-sun');
+if (themeIcon) {
+  themeIcon.onclick = (e) => {
+    setTheme(!document.body.classList.contains('dark'));
+    e.stopPropagation();
+  };
+}
 const setTheme = (dark) => {
   document.body.classList.toggle('dark', dark);
   localStorage.setItem('theme', dark ? 'dark' : 'light');
 };
-themeBtn.onclick = () => setTheme(!document.body.classList.contains('dark'));
 window.onload = () => {
+  autoCleanZoneWidgets();
   setTheme(localStorage.getItem('theme') === 'dark');
   renderAll();
 };
@@ -33,6 +40,36 @@ function renderTabsBar() {
     tab.className = 'tab' + (p.id === data.current ? ' active' : '');
     tab.tabIndex = 0;
     tab.title = 'Double click to rename';
+    tab.setAttribute('draggable', true);
+    tab.dataset.idx = i;
+    // Drag events
+    tab.ondragstart = (e) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', i);
+      tab.classList.add('dragging');
+    };
+    tab.ondragend = () => {
+      tab.classList.remove('dragging');
+    };
+    tab.ondragover = (e) => {
+      e.preventDefault();
+      tab.classList.add('drag-over');
+    };
+    tab.ondragleave = () => {
+      tab.classList.remove('drag-over');
+    };
+    tab.ondrop = (e) => {
+      e.preventDefault();
+      tab.classList.remove('drag-over');
+      const fromIdx = +e.dataTransfer.getData('text/plain');
+      const toIdx = i;
+      if (fromIdx !== toIdx) {
+        const moved = data.pages.splice(fromIdx, 1)[0];
+        data.pages.splice(toIdx, 0, moved);
+        setData(data);
+        renderTabsBar();
+      }
+    };
     let name = p.name || (i+1).toString();
     tab.innerHTML = '';
     if (editTabId === p.id) {
@@ -59,6 +96,16 @@ function renderTabsBar() {
         editTabId = null;
         renderTabsBar();
       };
+      // Глобальный обработчик для клика вне input
+      setTimeout(() => {
+        function handleClickOutside(e) {
+          if (document.activeElement !== input) return;
+          if (!input.contains(e.target)) {
+            input.blur();
+          }
+        }
+        document.addEventListener('mousedown', handleClickOutside, {capture:true, once:true});
+      }, 0);
     } else {
       const nameSpan = document.createElement('span');
       nameSpan.textContent = name;
@@ -135,16 +182,29 @@ function renderBookmarks(id = 'bookmarks-widget') {
   const data = getData();
   const page = getCurrentPage(data);
   const el = document.getElementById(id);
-  let html = `<h2><i class='fa-solid fa-bookmark'></i> Bookmarks <span style='float:right;'>
-    <button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button>
-    <button id='bm-edit-toggle-${id}' class='widget-header-btn'><i class='fa-solid fa-pen'></i></button>
-    <button id='bm-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button>
-  </span></h2>`;
-  if (!page.bookmarks.length) {
-    el.innerHTML = html;
+  const widget = findWidgetById(id);
+  if (editWidgetId === id) {
+    el.innerHTML = `<h2><i class='fa-solid fa-bookmark'></i> <input id='edit-widget-title-${id}' value='${getWidgetTitle(widget, 'Bookmarks')}' style='font-size:1.1em;width:70%;margin-left:8px;'> <span style='float:right;'><button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button><button id='bm-edit-toggle-${id}' class='widget-header-btn'><i class='fa-solid fa-pen'></i></button><button id='bookmarks-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+    const input = document.getElementById(`edit-widget-title-${id}`);
+    input.focus(); input.select();
+    input.onkeydown = function(e) {
+      if (e.key === 'Enter') { saveWidgetTitle(id, input.value.trim() || 'Bookmarks'); editWidgetId = null; }
+      else if (e.key === 'Escape') { editWidgetId = null; renderZones(); }
+    };
+    input.onblur = function() { saveWidgetTitle(id, input.value.trim() || 'Bookmarks'); editWidgetId = null; };
     document.getElementById(`add-bm-btn-${id}`).onclick = () => showAddBookmarkInput(id);
     document.getElementById(`bm-edit-toggle-${id}`).onclick = () => toggleBookmarksEditMode(id);
-    document.getElementById(`bm-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
+    document.getElementById(`bookmarks-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
+    return;
+  }
+  let html = `<h2><i class='fa-solid fa-bookmark'></i> ${getWidgetTitle(widget, 'Bookmarks')} <span style='float:right;'><button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button><button id='bm-edit-toggle-${id}' class='widget-header-btn'><i class='fa-solid fa-pen'></i></button><button id='bookmarks-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+  if (!page.bookmarks.length) {
+    el.innerHTML = html;
+    const h2 = el.querySelector('h2');
+    if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Bookmarks');
+    document.getElementById(`add-bm-btn-${id}`).onclick = () => showAddBookmarkInput(id);
+    document.getElementById(`bm-edit-toggle-${id}`).onclick = () => toggleBookmarksEditMode(id);
+    document.getElementById(`bookmarks-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
     return;
   }
   html += `<ul id='bm-list-${id}'>`;
@@ -158,9 +218,11 @@ function renderBookmarks(id = 'bookmarks-widget') {
   });
   html += `</ul>`;
   el.innerHTML = html;
+  const h2 = el.querySelector('h2');
+  if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Bookmarks');
   document.getElementById(`add-bm-btn-${id}`).onclick = () => showAddBookmarkInput(id);
   document.getElementById(`bm-edit-toggle-${id}`).onclick = () => toggleBookmarksEditMode(id);
-  document.getElementById(`bm-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
+  document.getElementById(`bookmarks-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
   // обработка rename/delete
   page.bookmarks.forEach((b, i) => {
     const delBtn = document.getElementById(`bm-delete-${id}-${i}`);
@@ -227,10 +289,24 @@ function showRenameBookmarkInput(id, idx) {
 }
 
 function renderNotes(id = 'notes-widget') {
+  if (editWidgetId === id) return;
   const data = getData();
   const page = getCurrentPage(data);
   const el = document.getElementById(id);
-  el.innerHTML = `<h2><i class='fa-solid fa-note-sticky'></i> Notes <span style='float:right;'>
+  const widget = findWidgetById(id);
+  if (editWidgetId === id) {
+    el.innerHTML = `<h2><i class='fa-solid fa-note-sticky'></i> <input id='edit-widget-title-${id}' value='${getWidgetTitle(widget, 'Notes')}' style='font-size:1.1em;width:70%;margin-left:8px;'> <span style='float:right;'><button id='notes-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+    const input = document.getElementById(`edit-widget-title-${id}`);
+    input.focus(); input.select();
+    input.onkeydown = function(e) {
+      if (e.key === 'Enter') { saveWidgetTitle(id, input.value.trim() || 'Notes'); editWidgetId = null; }
+      else if (e.key === 'Escape') { editWidgetId = null; renderZones(); }
+    };
+    input.onblur = function() { saveWidgetTitle(id, input.value.trim() || 'Notes'); editWidgetId = null; };
+    document.getElementById(`notes-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
+    return;
+  }
+  el.innerHTML = `<h2><i class='fa-solid fa-note-sticky'></i> ${getWidgetTitle(widget, 'Notes')} <span style='float:right;'>
     <button id='notes-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button>
   </span></h2>
     <textarea id="notes-area" rows="5" style="width:100%;">${page.notes.join('\n')}</textarea>`;
@@ -242,6 +318,9 @@ function renderNotes(id = 'notes-widget') {
   };
   autoGrow(notesArea);
   document.getElementById(`notes-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
+  const h2 = el.querySelector('h2');
+  if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Notes');
+  document.getElementById(`notes-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
 }
 
 function autoGrow(textarea) {
@@ -250,6 +329,7 @@ function autoGrow(textarea) {
 }
 
 let zoneWidgets = null;
+let zoneWidgetsCalendarState = {};
 
 function loadZoneWidgets() {
   const data = getData();
@@ -265,27 +345,35 @@ function saveZoneWidgets() {
   setData(data);
 }
 
+function getWidgetType(widget) {
+  return typeof widget === 'string' ? widget : widget.type;
+}
+function getWidgetTitle(widget, def) {
+  return typeof widget === 'string' ? def : (widget.title || def);
+}
+
 function renderZones() {
   for (let i = 0; i < 3; i++) {
     const zone = document.getElementById(`zone-${i+1}`);
     zone.innerHTML = '';
-    (zoneWidgets[i] || []).forEach((type, j) => {
-      const wid = `${type}-widget-${i}-${j}`;
+    (zoneWidgets[i] || []).forEach((widget, j) => {
+      const widgetType = getWidgetType(widget);
+      const wid = `${widgetType}-widget-${i}-${j}`;
       const wrap = document.createElement('div');
       wrap.style.width = '100%';
       wrap.innerHTML = `<section class='widget-section' id="${wid}"></section>`;
       zone.appendChild(wrap);
-      if (type === 'bookmarks') {
+      if (widgetType === 'bookmarks') {
         renderBookmarks(wid);
-      } else if (type === 'notes') {
+      } else if (widgetType === 'notes') {
         renderNotes(wid);
-      } else if (type === 'calendar') {
+      } else if (widgetType === 'calendar') {
         renderCalendar(wid);
-      } else if (type === 'todo') {
+      } else if (widgetType === 'todo') {
         renderTodo(wid);
-      } else if (type === 'clock') {
+      } else if (widgetType === 'clock') {
         renderClock(wid);
-      } else if (type === 'calculator') {
+      } else if (widgetType === 'calculator') {
         renderCalculator(wid);
       }
     });
@@ -300,6 +388,7 @@ function renderZones() {
 function showWidgetMenu(idx) {
   const zone = document.getElementById(`zone-${idx+1}`);
   const menu = document.createElement('div');
+  menu.className = 'widget-menu-popup';
   menu.style.position = 'absolute';
   menu.style.top = '50px';
   menu.style.left = '50%';
@@ -312,10 +401,32 @@ function showWidgetMenu(idx) {
   menu.style.zIndex = 10;
   menu.innerHTML = `<button class='widget-menu-btn' data-type='bookmarks'><i class='fa-solid fa-bookmark'></i> Bookmarks</button><br><button class='widget-menu-btn' data-type='notes'><i class='fa-solid fa-note-sticky'></i> Notes</button><br><button class='widget-menu-btn' data-type='calendar'><i class='fa-solid fa-calendar'></i> Calendar</button><br><button class='widget-menu-btn' data-type='todo'><i class='fa-solid fa-list-check'></i> ToDo</button><br><button class='widget-menu-btn' data-type='clock'><i class='fa-solid fa-clock'></i> Clock</button><br><button class='widget-menu-btn' data-type='calculator'><i class='fa-solid fa-calculator'></i> Calculator</button>`;
   zone.appendChild(menu);
+  // Закрытие по клику вне меню
+  function closeMenu(e) {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('mousedown', closeMenu);
+      document.removeEventListener('keydown', escHandler);
+    }
+  }
+  function escHandler(e) {
+    if (e.key === 'Escape') {
+      menu.remove();
+      document.removeEventListener('mousedown', closeMenu);
+      document.removeEventListener('keydown', escHandler);
+    }
+  }
+  setTimeout(() => {
+    document.addEventListener('mousedown', closeMenu);
+    document.addEventListener('keydown', escHandler);
+  }, 0);
   menu.querySelectorAll('.widget-menu-btn').forEach(btn => btn.onclick = function() {
     zoneWidgets[idx].push(this.dataset.type);
     saveZoneWidgets();
     renderZones();
+    menu.remove();
+    document.removeEventListener('mousedown', closeMenu);
+    document.removeEventListener('keydown', escHandler);
   });
 }
 function getCalendarEvents(id) {
@@ -331,7 +442,9 @@ function setCalendarEvents(id, events) {
   setData(data);
 }
 function renderCalendar(id = 'calendar-widget') {
+  if (editWidgetId === id) return;
   const el = document.getElementById(id);
+  const widget = findWidgetById(id);
   if (!zoneWidgetsCalendarState[id]) {
     const today = new Date();
     zoneWidgetsCalendarState[id] = { year: today.getFullYear(), month: today.getMonth() };
@@ -340,12 +453,12 @@ function renderCalendar(id = 'calendar-widget') {
   const today = new Date();
   const events = getCalendarEvents(id);
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  let html = `<h2><i class='fa-solid fa-calendar'></i> Calendar</h2>`;
-  html += `<div class='calendar-header'>
+  let html = `<h2><i class='fa-solid fa-calendar'></i> ${getWidgetTitle(widget, 'Calendar')} <span style='float:right;'><button id='calendar-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+  html += `<div class='calendar-header'><div class='calendar-header-inner'>
     <button class='calendar-nav' id='cal-prev-${id}'>&lt;</button>
     <span>${monthNames[month]} ${year}</span>
     <button class='calendar-nav' id='cal-next-${id}'>&gt;</button>
-  </div>`;
+  </div></div>`;
   html += `<div class='calendar-grid'>`;
   const weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   for (let d of weekDays) html += `<div class='calendar-cell calendar-weekday'>${d}</div>`;
@@ -385,8 +498,12 @@ function renderCalendar(id = 'calendar-widget') {
   el.querySelectorAll('.calendar-cell[data-date]').forEach(cell => {
     cell.onclick = () => showCalendarEventForm(id, cell.dataset.date);
   });
+  const h2 = el.querySelector('h2');
+  if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Calendar');
+  document.getElementById(`calendar-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
 }
 function showCalendarEventForm(id, dateStr) {
+  if (editWidgetId === id) return;
   const el = document.getElementById(`calendar-events-${id}`);
   const events = getCalendarEvents(id);
   let editKey = window._calEditKey || null;
@@ -458,7 +575,7 @@ function calendarLineColor(idx) {
 function removeWidgetBySectionId(sectionId) {
   for (let i = 0; i < zoneWidgets.length; i++) {
     for (let j = 0; j < zoneWidgets[i].length; j++) {
-      const wid = `${zoneWidgets[i][j]}-widget-${i}-${j}`;
+      const wid = `${getWidgetType(zoneWidgets[i][j])}-widget-${i}-${j}`;
       if (wid === sectionId) {
         zoneWidgets[i].splice(j, 1);
         saveZoneWidgets();
@@ -482,9 +599,11 @@ function setTodoList(id, list) {
   setData(data);
 }
 function renderTodo(id = 'todo-widget') {
+  if (editWidgetId === id) return;
   const el = document.getElementById(id);
   const list = getTodoList(id);
-  let html = `<h2><i class='fa-solid fa-list-check'></i> ToDo <button id='todo-add-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button></h2>`;
+  const widget = findWidgetById(id);
+  let html = `<h2><i class='fa-solid fa-list-check'></i> ${getWidgetTitle(widget, 'ToDo')} <button id='todo-add-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button></h2>`;
   html += `<ul class='todo-list'>`;
   list.forEach((item, i) => {
     if (item._edit) {
@@ -534,19 +653,38 @@ function renderTodo(id = 'todo-widget') {
     setTodoList(id, list);
     renderTodo(id);
   });
+  const h2 = el.querySelector('h2');
+  if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'ToDo');
+  document.getElementById(`notes-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
 }
 
 function renderClock(id = 'clock-widget') {
+  if (editWidgetId === id) return;
   const el = document.getElementById(id);
+  const widget = findWidgetById(id);
   function update() {
     const now = new Date();
     const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
     const date = now.toLocaleDateString();
-    el.innerHTML = `<h2><i class='fa-solid fa-clock'></i> Clock</h2><div class='clock-time'>${time}</div><div class='clock-date'>${date}</div>`;
+    // h2 не обновляем, только время и дату
+    let html = `<h2><i class='fa-solid fa-clock'></i> ${getWidgetTitle(widget, 'Clock')} <span style='float:right;'><button id='clock-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+    html += `<div class='clock-time'>${time}</div><div class='clock-date'>${date}</div>`;
+    el.innerHTML = html;
+    const h2 = el.querySelector('h2');
+    if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Clock');
+    document.getElementById(`clock-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
   }
   update();
   if (el._clockTimer) clearInterval(el._clockTimer);
-  el._clockTimer = setInterval(update, 1000);
+  el._clockTimer = setInterval(() => {
+    // Обновляем только время и дату, не трогаем h2
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+    const date = new Date().toLocaleDateString();
+    const timeDiv = el.querySelector('.clock-time');
+    const dateDiv = el.querySelector('.clock-date');
+    if (timeDiv) timeDiv.textContent = time;
+    if (dateDiv) dateDiv.textContent = date;
+  }, 1000);
 }
 
 function calcSimple(expr) {
@@ -586,8 +724,10 @@ function calcSimple(expr) {
 }
 
 function renderCalculator(id = 'calculator-widget') {
+  if (editWidgetId === id) return;
   const el = document.getElementById(id);
-  let html = `<h2><i class='fa-solid fa-calculator'></i> Calculator</h2>`;
+  const widget = findWidgetById(id);
+  let html = `<h2><i class='fa-solid fa-calculator'></i> ${getWidgetTitle(widget, 'Calculator')}</h2>`;
   html += `<form id='calc-form-${id}' autocomplete='off' style='display:flex;gap:0.5rem;align-items:center;'>
     <input id='calc-input-${id}' type='text' style='flex:1;font-size:1.1rem;padding:4px 8px;' placeholder='2+2*2'>
     <button id='calc-eval-${id}' type='submit'>=</button>
@@ -604,6 +744,9 @@ function renderCalculator(id = 'calculator-widget') {
     let res = calcSimple(expr);
     result.textContent = (res === 'Error') ? 'Error' : '= ' + res;
   };
+  const h2 = el.querySelector('h2');
+  if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Calculator');
+  document.getElementById(`notes-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
 }
 
 // Drag and Drop functionality
@@ -666,7 +809,7 @@ function updateWidgetPositions() {
   const zones = document.querySelectorAll('.zone');
   zoneWidgets = Array.from(zones).map(zone => 
     Array.from(zone.querySelectorAll('.widget-section'))
-      .map(widget => widget.id.split('-')[0])
+      .map(widget => getWidgetType(widget))
   );
   saveZoneWidgets();
   renderZones();
@@ -677,4 +820,157 @@ function renderAll() {
   renderTabsBar();
   renderZones();
   initDragAndDrop();
+}
+
+let editWidgetId = null;
+
+function makeWidgetTitleEditable(sectionId, defaultTitle) {
+  editWidgetId = sectionId;
+  const section = document.getElementById(sectionId);
+  const h2 = section.querySelector('h2');
+  if (!h2) return;
+  const oldTitle = h2.childNodes[1] && h2.childNodes[1].nodeType === 3 ? h2.childNodes[1].textContent.trim() : defaultTitle;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = oldTitle;
+  input.style.fontSize = '1.1em';
+  input.style.width = '70%';
+  input.style.marginLeft = '8px';
+  input.onkeydown = function(e) {
+    if (e.key === 'Enter') {
+      saveWidgetTitle(sectionId, input.value.trim() || defaultTitle);
+      editWidgetId = null;
+      location.reload();
+    } else if (e.key === 'Escape') {
+      editWidgetId = null;
+      renderZones();
+    }
+  };
+  input.onblur = function() {
+    saveWidgetTitle(sectionId, input.value.trim() || defaultTitle);
+    editWidgetId = null;
+    location.reload();
+  };
+  h2.innerHTML = '';
+  h2.appendChild(input);
+  input.focus();
+  input.select();
+}
+
+function saveWidgetTitle(sectionId, newTitle) {
+  // sectionId = bookmarks-widget-0-0, notes-widget-1-0, ...
+  const [type, , zoneIdx, widgetIdx] = sectionId.split('-');
+  const idx = parseInt(zoneIdx);
+  const widx = parseInt(widgetIdx);
+  if (!zoneWidgets[idx][widx]) return;
+  if (typeof zoneWidgets[idx][widx] === 'string') {
+    zoneWidgets[idx][widx] = {type: zoneWidgets[idx][widx], title: newTitle};
+  } else {
+    zoneWidgets[idx][widx].title = newTitle;
+  }
+  saveZoneWidgets();
+  renderZones();
+}
+
+function findWidgetById(id) {
+  // id = type-widget-i-j
+  const parts = id.split('-');
+  const zone = parseInt(parts[2]);
+  const idx = parseInt(parts[3]);
+  return zoneWidgets[zone][idx];
+}
+
+// Автоматическая очистка "схлопнутых" виджетов
+function autoCleanZoneWidgets() {
+  let data = getData();
+  let changed = false;
+  data.pages.forEach(page => {
+    if (page.zoneWidgets) {
+      let cleaned = page.zoneWidgets.map(zone => zone.filter(w => typeof w === 'string' || (w && w.type)));
+      if (JSON.stringify(cleaned) !== JSON.stringify(page.zoneWidgets)) {
+        page.zoneWidgets = cleaned;
+        changed = true;
+      }
+    }
+  });
+  if (changed) setData(data);
+}
+
+// Main menu button and dropdown
+const mainMenuBtn = document.getElementById('main-menu-btn');
+if (mainMenuBtn) {
+  mainMenuBtn.onclick = (e) => {
+    let menu = document.getElementById('main-menu-popup');
+    if (menu) { menu.remove(); return; }
+    menu = document.createElement('div');
+    menu.id = 'main-menu-popup';
+    menu.className = 'main-menu-popup';
+    menu.style.position = 'absolute';
+    const rect = mainMenuBtn.getBoundingClientRect();
+    menu.style.left = rect.left + 'px';
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.background = '#fff';
+    menu.style.border = '1px solid #e0e0e0';
+    menu.style.borderRadius = '8px';
+    menu.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+    menu.style.padding = '0.5rem 1rem';
+    menu.style.zIndex = 1000;
+    menu.innerHTML = `
+      <button id='export-btn' style='display:block;width:100%;margin-bottom:6px;'>Export</button>
+      <button id='import-btn' style='display:block;width:100%;margin-bottom:6px;'>Import</button>
+      <button id='about-btn' style='display:block;width:100%;'>About</button>
+    `;
+    document.body.appendChild(menu);
+    document.addEventListener('mousedown', function closeMenu(e) {
+      if (!menu.contains(e.target) && e.target !== mainMenuBtn) {
+        menu.remove();
+        document.removeEventListener('mousedown', closeMenu);
+      }
+    });
+    document.getElementById('export-btn').onclick = () => { exportAllData(); menu.remove(); };
+    document.getElementById('import-btn').onclick = () => { importAllData(); menu.remove(); };
+    document.getElementById('about-btn').onclick = () => { alert('WidgetDash\nStart page with widgets.\nAll data stored locally.'); menu.remove(); };
+  };
+}
+
+function exportAllData() {
+  const data = localStorage.getItem(STORAGE_KEY);
+  const theme = localStorage.getItem('theme');
+  const out = JSON.stringify({data: JSON.parse(data), theme: theme || 'light'});
+  const blob = new Blob([out], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'widgetdash-backup.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
+
+function importAllData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!imported.data || !imported.data.pages) throw new Error('Invalid backup');
+        setData(imported.data);
+        if (imported.theme) {
+          localStorage.setItem('theme', imported.theme);
+          setTheme(imported.theme === 'dark');
+        }
+        renderAll();
+        alert('Import successful!');
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 } 

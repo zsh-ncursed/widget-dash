@@ -249,6 +249,17 @@ button:hover {
   margin-bottom: 0.5rem;
   font-size: 1.1rem;
 }
+.calendar-header-inner {
+  width: 220px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.calendar-header-inner span {
+  width: 100px;
+  text-align: center;
+}
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -450,4 +461,31 @@ button:hover {
 }
 #calculator-widget button[type='submit']:hover {
   background: #2563eb;
+}
+#add-page {
+  background: none !important;
+  color: inherit !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 1.2em !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  transition: none !important;
+}
+#add-page:hover, #add-page:focus, #add-page:active {
+  background: none !important;
+  color: inherit !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  outline: none !important;
+}
+.tab.dragging {
+  opacity: 0.5;
+  background: #b3d1ff;
+}
+.tab.drag-over {
+  outline: 2px dashed #4f8cff;
+  z-index: 2;
 } 
