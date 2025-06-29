@@ -250,14 +250,13 @@ button:hover {
   font-size: 1.1rem;
 }
 .calendar-header-inner {
-  width: 220px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  background: red;
 }
 .calendar-header-inner span {
-  width: 100px;
   text-align: center;
 }
 .calendar-grid {
@@ -461,7 +460,7 @@ button:hover {
 }
 #calculator-widget button[type='submit']:hover {
   background: #2563eb;
-}
+} 
 #add-page {
   background: none !important;
   color: inherit !important;
@@ -488,4 +487,5 @@ button:hover {
 .tab.drag-over {
   outline: 2px dashed #4f8cff;
   z-index: 2;
-} 
+}
+body { background: yellow !important; } 

@@ -245,7 +245,7 @@ function toggleBookmarksEditMode(id) {
 
 function showAddBookmarkInput(id) {
   const el = document.getElementById(id);
-  el.innerHTML += `<div id='bm-add-form-${id}'><input id='bm-url-${id}' placeholder='Enter URL' autofocus><button id='bm-save-${id}'><i class='fa-solid fa-check'></i></button></div>`;
+  el.innerHTML += `<div id='bm-add-form-${id}'><input id='bm-url-${id}' placeholder='Enter URL' autofocus><button id='bm-save-${id}' style="color:#22c55e">&#10003;</button></div>`;
   const urlInput = document.getElementById(`bm-url-${id}`);
   urlInput.focus();
   urlInput.onkeydown = e => {
@@ -508,7 +508,7 @@ function showCalendarEventForm(id, dateStr) {
   const events = getCalendarEvents(id);
   let editKey = window._calEditKey || null;
   let html = `<div class='calendar-event-form'><b>${dateStr}</b><br>`;
-  html += `<input id='cal-ev-time-${id}' type='time' style='width:90px;'> <input id='cal-ev-input-${id}' placeholder='Event...' style='width:55%'> <button id='cal-ev-add-${id}'>Add</button><br>`;
+  html += `<input id='cal-ev-time-${id}' type='time' style='width:90px;'> <input id='cal-ev-input-${id}' placeholder='Event...' style='width:55%'> <button id='cal-ev-add-${id}' style="color:#22c55e">&#10003;</button><br>`;
   if (events[dateStr] && events[dateStr].length) {
     const sorted = events[dateStr].map((ev, i) => ({...ev, _idx: i})).sort((a, b) => (a.time || '') > (b.time || '') ? 1 : -1);
     html += `<ul class='calendar-event-list'>`;
@@ -516,14 +516,14 @@ function showCalendarEventForm(id, dateStr) {
       const i = ev._idx;
       const key = `${ev.time || ''}|${ev.text}`;
       if (editKey === key) {
-        html += `<li><input id='cal-ev-edit-time-${id}-${i}' type='time' value='${ev.time||''}' style='width:90px;'> <input id='cal-ev-edit-input-${id}-${i}' value='${ev.text}' style='width:55%'> <button class='calendar-event-save' data-idx='${i}' data-key='${key}'>✔</button> <button class='calendar-event-cancel' data-idx='${i}'>✕</button></li>`;
+        html += `<li><input id='cal-ev-edit-time-${id}-${i}' type='time' value='${ev.time||''}' style='width:90px;'> <input id='cal-ev-edit-input-${id}-${i}' value='${ev.text}' style='width:55%'> <button class='calendar-event-save' data-idx='${i}' data-key='${key}' style="color:#22c55e">✔</button> <button class='calendar-event-cancel' data-idx='${i}' style="color:#e74c3c">✕</button></li>`;
       } else {
-        html += `<li>${ev.time ? `<span class='calendar-event-time'>${ev.time}</span> ` : ''}${ev.text}<button class='calendar-event-edit' data-idx='${i}' data-key='${key}'>✏️</button><button class='calendar-event-del' data-idx='${i}'>✕</button></li>`;
+        html += `<li>${ev.time ? `<span class='calendar-event-time'>${ev.time}</span> ` : ''}${ev.text}<button class='calendar-event-edit' data-idx='${i}' data-key='${key}' style="color:#22c55e">✏️</button><button class='calendar-event-del' data-idx='${i}' style="color:#e74c3c">✕</button></li>`;
       }
     });
     html += `</ul>`;
   }
-  html += `<button id='cal-ev-close-${id}'>Close</button></div>`;
+  html += `<button id='cal-ev-close-${id}' style="color:#e74c3c">&#10005;</button></div>`;
   el.innerHTML = html;
   document.getElementById(`cal-ev-input-${id}`).focus();
   document.getElementById(`cal-ev-add-${id}`).onclick = () => {
@@ -566,6 +566,14 @@ function showCalendarEventForm(id, dateStr) {
     el.innerHTML = '';
     window._calEditKey = null;
   };
+  document.getElementById(`cal-ev-time-${id}`).onkeydown = function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById(`cal-ev-input-${id}`).focus();
+    }
+  };
+  document.getElementById(`cal-ev-time-${id}`).onblur = function() {
+    document.getElementById(`cal-ev-input-${id}`).focus();
+  };
 }
 function calendarLineColor(idx) {
   const colors = ['#e74c3c','#4f8cff','#22c55e','#f59e42','#a855f7','#f43f5e','#14b8a6'];
@@ -607,9 +615,9 @@ function renderTodo(id = 'todo-widget') {
   html += `<ul class='todo-list'>`;
   list.forEach((item, i) => {
     if (item._edit) {
-      html += `<li><input id='todo-edit-input-${id}-${i}' value='${item.text}' style='width:60%'> <button class='todo-save' data-idx='${i}'>✔</button> <button class='todo-cancel' data-idx='${i}'>✕</button></li>`;
+      html += `<li><input id='todo-edit-input-${id}-${i}' value='${item.text}' style='width:60%'> <button class='todo-save' data-idx='${i}' style="color:#22c55e">&#10003;</button> <button class='todo-cancel' data-idx='${i}' style="color:#e74c3c">✕</button></li>`;
     } else {
-      html += `<li><label><input type='checkbox' class='todo-check' data-idx='${i}' ${item.done ? 'checked' : ''}> <span class='${item.done ? 'todo-done' : ''}'>${item.text}</span></label> <button class='todo-edit' data-idx='${i}'>✏️</button> <button class='todo-del' data-idx='${i}'>✕</button></li>`;
+      html += `<li><label><input type='checkbox' class='todo-check' data-idx='${i}' ${item.done ? 'checked' : ''}> <span class='${item.done ? 'todo-done' : ''}'>${item.text}</span></label> <button class='todo-edit' data-idx='${i}' style="color:#22c55e">✏️</button> <button class='todo-del' data-idx='${i}' style="color:#e74c3c">✕</button></li>`;
     }
   });
   html += `</ul>`;
@@ -730,7 +738,7 @@ function renderCalculator(id = 'calculator-widget') {
   let html = `<h2><i class='fa-solid fa-calculator'></i> ${getWidgetTitle(widget, 'Calculator')}</h2>`;
   html += `<form id='calc-form-${id}' autocomplete='off' style='display:flex;gap:0.5rem;align-items:center;'>
     <input id='calc-input-${id}' type='text' style='flex:1;font-size:1.1rem;padding:4px 8px;' placeholder='2+2*2'>
-    <button id='calc-eval-${id}' type='submit'>=</button>
+    <button id='calc-eval-${id}' type='submit' style="color:#22c55e">&#10003;</button>
   </form>
   <div id='calc-result-${id}' class='calc-result'></div>`;
   el.innerHTML = html;
