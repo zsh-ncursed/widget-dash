@@ -184,7 +184,7 @@ function renderBookmarks(id = 'bookmarks-widget') {
   const el = document.getElementById(id);
   const widget = findWidgetById(id);
   if (editWidgetId === id) {
-    el.innerHTML = `<h2><i class='fa-solid fa-bookmark'></i> <input id='edit-widget-title-${id}' value='${getWidgetTitle(widget, 'Bookmarks')}' style='font-size:1.1em;width:70%;margin-left:8px;'> <span style='float:right;'><button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button><button id='bm-edit-toggle-${id}' class='widget-header-btn'><i class='fa-solid fa-pen'></i></button><button id='bookmarks-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+    el.innerHTML = `<h2><i class='fa-solid fa-bookmark'></i> <input id='edit-widget-title-${id}' value='${getWidgetTitle(widget, 'Bookmarks')}' style='font-size:1.1em;width:70%;margin-left:8px;'> <span style='float:right;'><button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button><button id='bookmarks-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
     const input = document.getElementById(`edit-widget-title-${id}`);
     input.focus(); input.select();
     input.onkeydown = function(e) {
@@ -193,27 +193,24 @@ function renderBookmarks(id = 'bookmarks-widget') {
     };
     input.onblur = function() { saveWidgetTitle(id, input.value.trim() || 'Bookmarks'); editWidgetId = null; };
     document.getElementById(`add-bm-btn-${id}`).onclick = () => showAddBookmarkInput(id);
-    document.getElementById(`bm-edit-toggle-${id}`).onclick = () => toggleBookmarksEditMode(id);
     document.getElementById(`bookmarks-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
     return;
   }
-  let html = `<h2><i class='fa-solid fa-bookmark'></i> ${getWidgetTitle(widget, 'Bookmarks')} <span style='float:right;'><button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button><button id='bm-edit-toggle-${id}' class='widget-header-btn'><i class='fa-solid fa-pen'></i></button><button id='bookmarks-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
+  let html = `<h2><i class='fa-solid fa-bookmark'></i> ${getWidgetTitle(widget, 'Bookmarks')} <span style='float:right;'><button id='add-bm-btn-${id}' class='widget-header-btn'><i class='fa-solid fa-plus'></i></button><button id='bookmarks-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
   if (!page.bookmarks.length) {
     el.innerHTML = html;
     const h2 = el.querySelector('h2');
     if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Bookmarks');
     document.getElementById(`add-bm-btn-${id}`).onclick = () => showAddBookmarkInput(id);
-    document.getElementById(`bm-edit-toggle-${id}`).onclick = () => toggleBookmarksEditMode(id);
     document.getElementById(`bookmarks-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
     return;
   }
-  html += `<ul id='bm-list-${id}'>`;
+  html += `<ul id='bm-list-${id}' class='bm-list'>`;
   page.bookmarks.forEach((b, i) => {
     html += `<li data-idx='${i}'>
       <img src='https://www.google.com/s2/favicons?domain=${encodeURIComponent(b.url)}' style='width:18px;height:18px;vertical-align:middle;margin-right:6px;'>
       <a href='${b.url}' target='_blank' class='bm-link'>${b.title || b.url}</a>
-      <button class='bm-rename' id='bm-rename-${id}-${i}' title='Rename' style='display:${bookmarksEditMode ? 'inline-block':'none'}'><i class='fa-solid fa-pen'></i></button>
-      <button class='bm-delete' id='bm-delete-${id}-${i}' title='Delete' style='display:${bookmarksEditMode ? 'inline-block':'none'}'><i class='fa-solid fa-xmark'></i></button>
+      <button class='bm-delete' id='bm-delete-${id}-${i}' title='Удалить'><i class='fa-solid fa-xmark'></i></button>
     </li>`;
   });
   html += `</ul>`;
@@ -221,20 +218,23 @@ function renderBookmarks(id = 'bookmarks-widget') {
   const h2 = el.querySelector('h2');
   if (h2) h2.ondblclick = () => makeWidgetTitleEditable(id, 'Bookmarks');
   document.getElementById(`add-bm-btn-${id}`).onclick = () => showAddBookmarkInput(id);
-  document.getElementById(`bm-edit-toggle-${id}`).onclick = () => toggleBookmarksEditMode(id);
   document.getElementById(`bookmarks-remove-widget-${id}`).onclick = () => removeWidgetBySectionId(id);
-  // обработка rename/delete
+  // обработка удаления и двойного клика для редактирования
   page.bookmarks.forEach((b, i) => {
     const delBtn = document.getElementById(`bm-delete-${id}-${i}`);
-    if (delBtn) delBtn.onclick = function() {
+    if (delBtn) delBtn.onclick = function(e) {
+      e.stopPropagation();
       page.bookmarks.splice(i,1);
       setData(data);
       renderBookmarks(id);
     };
-    const renBtn = document.getElementById(`bm-rename-${id}-${i}`);
-    if (renBtn) renBtn.onclick = function() {
-      showRenameBookmarkInput(id, i);
-    };
+    const li = el.querySelector(`li[data-idx='${i}']`);
+    if (li) {
+      li.ondblclick = function(e) {
+        e.stopPropagation();
+        showRenameBookmarkInput(id, i);
+      };
+    }
   });
 }
 
@@ -390,13 +390,14 @@ function showWidgetMenu(idx) {
   const menu = document.createElement('div');
   menu.className = 'widget-menu-popup';
   menu.style.position = 'absolute';
-  menu.style.top = '50px';
-  menu.style.left = '50%';
-  menu.style.transform = 'translate(-50%,0)';
-  menu.style.background = '#fff';
-  menu.style.border = '1px solid #e0e0e0';
+  // popup появляется в колонке, а не по центру
+  menu.style.left = '10px';
+  menu.style.top = '60px';
+  menu.style.background = getComputedStyle(document.body).getPropertyValue('--bg');
+  menu.style.color = getComputedStyle(document.body).getPropertyValue('--text');
+  menu.style.border = '1px solid ' + getComputedStyle(document.body).getPropertyValue('--border');
   menu.style.borderRadius = '8px';
-  menu.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+  menu.style.boxShadow = '0 2px 8px ' + getComputedStyle(document.body).getPropertyValue('--shadow');
   menu.style.padding = '1rem';
   menu.style.zIndex = 10;
   menu.innerHTML = `<button class='widget-menu-btn' data-type='bookmarks'><i class='fa-solid fa-bookmark'></i> Bookmarks</button><br><button class='widget-menu-btn' data-type='notes'><i class='fa-solid fa-note-sticky'></i> Notes</button><br><button class='widget-menu-btn' data-type='calendar'><i class='fa-solid fa-calendar'></i> Calendar</button><br><button class='widget-menu-btn' data-type='todo'><i class='fa-solid fa-list-check'></i> ToDo</button><br><button class='widget-menu-btn' data-type='clock'><i class='fa-solid fa-clock'></i> Clock</button><br><button class='widget-menu-btn' data-type='calculator'><i class='fa-solid fa-calculator'></i> Calculator</button>`;
@@ -674,7 +675,6 @@ function renderClock(id = 'clock-widget') {
     const now = new Date();
     const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
     const date = now.toLocaleDateString();
-    // h2 не обновляем, только время и дату
     let html = `<h2><i class='fa-solid fa-clock'></i> ${getWidgetTitle(widget, 'Clock')} <span style='float:right;'><button id='clock-remove-widget-${id}' class='widget-header-btn widget-header-btn-remove'><i class='fa-solid fa-xmark'></i></button></span></h2>`;
     html += `<div class='clock-time'>${time}</div><div class='clock-date'>${date}</div>`;
     el.innerHTML = html;
@@ -685,7 +685,6 @@ function renderClock(id = 'clock-widget') {
   update();
   if (el._clockTimer) clearInterval(el._clockTimer);
   el._clockTimer = setInterval(() => {
-    // Обновляем только время и дату, не трогаем h2
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
     const date = new Date().toLocaleDateString();
     const timeDiv = el.querySelector('.clock-time');

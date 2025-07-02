@@ -334,3 +334,53 @@ input[type='text'], input[type='time'], textarea {
 input[type='text']:focus, input[type='time']:focus, textarea:focus {
     border-bottom: 2px solid var(--accent) !important;
 }
+
+/* Часы */
+.clock-time {
+  text-align: center;
+  font-size: 3.2em;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 0.2em;
+}
+.clock-date {
+  text-align: center;
+  font-size: 1.4em;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* Popup меню (экспорт/импорт и выбор виджета) */
+.main-menu-popup, .widget-menu-popup {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+  z-index: 1000;
+  max-width: 320px;
+  min-width: 220px;
+  left: auto !important;
+  right: 20px;
+  top: 60px !important;
+  transform: none !important;
+}
+
+/* Список закладок */
+#bm-list, .bm-list {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+#bm-list li, .bm-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  margin-left: 0;
+}
+
+/* Убираем точку перед закладкой */
+#bm-list li::marker, .bm-list li::marker {
+  content: none;
+}
