@@ -105,7 +105,7 @@ export default function Dashboard() {
     setTheme(newTheme);
   };
 
-  // Load initial settings and WebDAV config
+  // Load initial settings
   useEffect(() => {
     storageUtils.get(['theme', 'tabWidgets', 'tabs']).then((result: any) => {
       if (result.theme) {
@@ -141,13 +141,13 @@ export default function Dashboard() {
     const widgetId = `${activeTab.id}_${zone}_${index}_${type}`;
     switch (type) {
       case 'bookmarks':
-        return <BookmarksWidget key={widgetId} widgetId={widgetId} onDataChange={syncToWebDAV} />;
+        return <BookmarksWidget key={widgetId} widgetId={widgetId} />;
       case 'notes':
-        return <NotesWidget key={widgetId} widgetId={widgetId} onDataChange={syncToWebDAV} />;
+        return <NotesWidget key={widgetId} widgetId={widgetId} />;
       case 'calendar':
-        return <CalendarWidget key={widgetId} widgetId={widgetId} onDataChange={syncToWebDAV} />;
+        return <CalendarWidget key={widgetId} widgetId={widgetId} />;
       case 'todo':
-        return <TodoWidget key={widgetId} widgetId={widgetId} onDataChange={syncToWebDAV} />;
+        return <TodoWidget key={widgetId} widgetId={widgetId} />;
       case 'clock':
         return <ClockWidget key={widgetId} widgetId={widgetId} />;
       case 'calculator':
