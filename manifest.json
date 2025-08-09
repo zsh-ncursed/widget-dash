@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "Widget Dashboard",
+  "version": "1.0.0",
+  "description": "A customizable Firefox start page with widgets for bookmarks, notes, calendar, tasks and more",
+  
+  "permissions": [
+    "storage",
+    "bookmarks",
+    "tabs",
+    "activeTab"
+  ],
+  
+  "chrome_url_overrides": {
+    "newtab": "dist/client/index.html"
+  },
+  
+  "background": {
+    "page": "src/extension/background.html",
+    "persistent": false
+  },
+  
+  "content_security_policy": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
+  
+  "icons": {
+    "16": "assets/icon-16.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+  
+  "web_accessible_resources": [
+    "assets/*",
+    "dist/client/*"
+  ],
+
+  "applications": {
+    "gecko": {
+      "strict_min_version": "109.0"
+    }
+  }
+}
