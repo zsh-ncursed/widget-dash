@@ -1,0 +1,15 @@
+{
+  "name": "mcp-filesystem",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server that exposes filesystem tools (read/write/list/stat/glob/copy/move/delete) outside the project sandbox",
+  "bin": {
+    "mcp-filesystem": "./server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "glob": "^10.4.5"
+  }
+}
+
